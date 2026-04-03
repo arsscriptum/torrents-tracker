@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block site_options %}
+<div class="container-fluid container__wrapper">
+    <div class="container">
+        <div class="site__wrapper_2cols">
+          <div class="m-100 mt-3" id="informations-square">
+            <h5 class="text-warning data-regular">Set End-Points URLs</h5>
+            <br>
+            <form class="mt-3" method="GET" action="{% url 'site_options' %}">
+    
+                  <div class="label-container">
+                    <p class="text-white">piratebay endpoint url</p>
+                    <span class="tooltip-icon" data-tooltip="the url of the piratebay REST API endpoint. Example: api.piratebay.org/q?YourMana">?</span>
+                  </div>
+                  <div class="form-group-config">
+                    <input type="text" placeholder="url" class="configinput-box__input" name="keywords" autocomplete="off">
+                    <button type="submit" class="configinput-box__button">test</button>
+                  </div>
+                  
+                  <div class="label-container">
+                    <p class="text-white">1337x endpoint url</p>
+                    <span class="tooltip-icon" data-tooltip="the url of the 1337x REST API endpoint. Example: api.piratebay.org/q?YourMana">?</span>
+                  </div>
+                  <div class="form-group-config">
+                    <input type="text" placeholder="url" class="configinput-box__input" name="keywords" autocomplete="off">
+                    <button type="submit" class="configinput-box__button">test</button>
+                  </div>
+                  
+                  <div class="label-container">
+                    <p class="text-white">local qbittorrentvpn url</p>
+                    <span class="tooltip-icon" data-tooltip="the url of the local qbittorrentvpn server REST API endpoint to send REST request to add Torrents in Queue">?</span>
+                  </div>
+                  <div class="form-group-config">
+                    <input type="text" placeholder="url" class="configinput-box__input" name="keywords" autocomplete="off">
+                    <button type="submit" class="configinput-box__button">test</button>
+                  </div>
+              </form> 
+          </div>
+          <div class="m-100 mt-3" id="table-square">
+            <h5 class="text-warning data-regular">select vpn exit location:</h5>
+            <br><br>
+            <div class="form-check">
+                <label class="form-check-label text-white"><input type="checkbox" class="form-check-input" name="vpn_location" value="nl.protonvpn.udp" id="nl.protonvpn.udp">Netherlands (Amsterdam)</label>
+            </div>
+            <div class="form-check">
+                <label class="form-check-label text-white"><input type="checkbox" class="form-check-input" name="vpn_location" value="fr.protonvpn.udp" id="fr.protonvpn.udp">France (Paris)</label>
+            </div>
+            <div class="form-check">
+                <label class="form-check-label text-white"><input type="checkbox" class="form-check-input" name="vpn_location" value="ch.protonvpn.udp" id="ch.protonvpn.udp">Switzerland (Zurich)</label>
+            </div>
+            <div class="form-check">
+                <label class="form-check-label text-white"><input type="checkbox" class="form-check-input" name="vpn_location" value="se.protonvpn.udp" id="se.protonvpn.udp">Sweden (Stockholm)</label>
+            </div>
+            <div class="form-check">
+                <label class="form-check-label text-white"><input type="checkbox" class="form-check-input" name="vpn_location" value="uk.protonvpn.udp" id="uk.protonvpn.udp">United Kingdom (London)</label>
+            </div>
+            <div class="form-check">
+                <label class="form-check-label text-white"><input type="checkbox" class="form-check-input" name="vpn_location" value="is.protonvpn.udp" id="is.protonvpn.udp">Iceland (Reykjavik)</label>
+            </div>
+            <div class="form-check">
+                <label class="form-check-label text-white"><input type="checkbox" class="form-check-input" name="vpn_location" value="ro.protonvpn.udp" id="ro.protonvpn.udp">Romania (Bucharest)</label>
+            </div>
+            <div class="form-check">
+                <label class="form-check-label text-white"><input type="checkbox" class="form-check-input" name="vpn_location" value="jp.protonvpn.udp" id="jp.protonvpn.udp">Japan (Tokyo)</label>
+            </div>
+            <div class="form-check">
+                <label class="form-check-label text-white"><input type="checkbox" class="form-check-input" name="vpn_location" value="au.protonvpn.udp" id="au.protonvpn.udp">Australia (Sydney)</label>
+            </div>
+            <div class="form-check">
+                <label class="form-check-label text-white"><input type="checkbox" class="form-check-input" name="vpn_location" value="br.protonvpn.udp" id="br.protonvpn.udp">Brazil (São Paulo)</label>
+            </div>
+            <br>
+            <button type="button" class="vpnconnect-box__button" onclick="connectVPN()">connect!</button>
+            <script>
+              function connectVPN() {
+                const selectedCheckbox = document.querySelector('input[name="vpn_location"]:checked');
+                if (selectedCheckbox) {
+                  const vpnId = selectedCheckbox.value;
+                  fetch("{% url 'manage_vpn' %}", {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'X-CSRFToken': '{{ csrf_token }}',
+                    },
+                    body: JSON.stringify({ vpn_id: vpnId }),
+                  })
+                  .then(response => response.json())
+                  .then(data => {
+                    if (data.success) {
+                      alert('VPN switched to ' + vpnId + '. Reconnecting...');
+                    } else {
+                      alert('Failed: ' + data.message);
+                    }
+                  })
+                  .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred.');
+                  });
+                } else {
+                  alert('Please select a VPN location.');
+                }
+              }
+            </script>
+          </div>
+        </div>
+    </div>
+</div>
+<script>
+  document.querySelectorAll('input[name="vpn_location"]').forEach((checkbox) => {
+      checkbox.addEventListener('change', function() {
+          if (this.checked) {
+              document.querySelectorAll('input[name="vpn_location"]').forEach((cb) => {
+                  if (cb !== this) cb.checked = false;
+              });
+          }
+      });
+  });
+</script>
+
+{% endblock %}

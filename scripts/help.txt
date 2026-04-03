@@ -1,0 +1,65 @@
+I have a file defining categories and sub categories. A item category and sub category is defined by 3 numbers, the first number is the main category and the combination of the 3 numbers represent the sub category. 
+
+Main Categories:
+0 = 'undefined',
+1 = 'Audio',
+2 = 'Video',
+3 = 'Applications',
+4 = 'Games',
+5 = 'Porn',
+6 = 'Other'
+
+Sub Categories: 
+101 = 'Music',
+102 = 'Audio Books',
+103 = 'Sound clips',
+104 = 'FLAC',
+199 = 'Other',
+201 = 'Movies',
+202 = 'Movies DVDR',
+203 = 'Music videos',
+204 = 'Movie Clips',
+205 = 'TV-Shows',
+206 = 'Handheld',
+207 = 'HD Movies',
+208 = 'HD TV-Shows',
+209 = '3D',
+210 = 'CAM/TS',
+211 = 'UHD/4k Movies',
+212 = 'UHD/4k TV-Shows',
+299 = 'Other',
+301 = 'Windows',
+302 = 'Mac/Apple',
+303 = 'UNIX',
+304 = 'Handheld',
+305 = 'IOS(iPad/iPhone)',
+306 = 'Android',
+399 = 'Other OS',
+401 = 'PC',
+402 = 'Mac/Apple',
+403 = 'PSx',
+404 = 'XBOX360',
+405 = 'Wii',
+406 = 'Handheld',
+407 = 'IOS(iPad/iPhone)',
+408 = 'Android',
+499 = 'Other OS',
+501 = 'Movies',
+502 = 'Movies DVDR',
+503 = 'Pictures',
+504 = 'Games',
+505 = 'HD Movies',
+506 = 'Movie Clips',
+507 = 'UHD/4k Movies',
+599 = 'Other',
+601 = 'E-books',
+602 = 'Comics',
+603 = 'Pictures',
+604 = 'Covers',
+605 = 'Physibles',
+699 = 'Other'
+
+Please write 2 powershell functions, each taking a 'string' parameter representing a 3 digit id, one named 'Get-MainCategory' and 'Get-SubCategory'. The first one returns the main category in string format and the second, returns the sub category in string format
+
+
+Please write 2 powershell functions, one named 'Get-AllMainCategories' and 'Get-AllSubCategories'. The first one returns the an array of strings with all the main categories and the second, returns the sub categories in string aray format

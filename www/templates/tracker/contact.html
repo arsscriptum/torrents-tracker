@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block contact_page %}
+<div class="container-fluid container__wrapper">
+    <div class="container">
+        <div class="site__wrapper_2cols">
+            <form action="/contact_us" method="GET" >
+                <div class="contact_form">
+                    <br>
+                  <label for="contact_form_name">Your Name :</label>
+                  <input type="text" class="contact_form" name="name" id="contact_form_name" placeholder="Enter Your Name">
+                 </div>
+                 <br>
+                 <div class="contact_form">
+                   <label for="contact_form_email">Your Email :</label>
+                  <input type="email" class="contact_form" name="_replyto" id="contact_form_email" placeholder="Enter Your Email">
+                 </div>
+                 <br>
+                 <div class="contact_form">
+                   <label for="contact_form_message"> Your Message :</label>
+                   <br>
+                  <textarea name="_message" class="contact_form" id="contact_form_message" placeholder="Enter Your Message"></textarea>
+                 </div>
+                 <br>
+                  <button type="submit" value="Send" class="contact_form_button">Submit</button>
+             </form>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

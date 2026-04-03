@@ -1,0 +1,60 @@
+name: Image Builds
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.0'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image-name:
+          - arsscriptum/torrents-tracker
+        include:
+          - image-name: arsscriptum/torrents-tracker
+            context: ./
+    steps:
+      - name: Fetching Latest Code
+        uses: actions/checkout@v4
+
+      # QEMU emulator to build for other platforms
+      - name: QEMU Emulator Initialization for Multi-Platforms Compilation
+        uses: docker/setup-qemu-action@v3
+
+      # Buildx automates creating the multi-arch manifest build
+      - name: BuildX Initialization (multi-arch manifest)
+        uses: docker/setup-buildx-action@v3
+
+      # Authenticate so that we can push to Docker Hub
+      - name: Dockerhub Authentication [https://hub.docker.com/login]
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Generate image tags and labels
+      - name: Generating Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ matrix.image-name }}
+          tags: |
+            type=semver,pattern={{major}}.{{minor}}.0
+
+      # Finally, build and push the images
+      - name: Building Container Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          #platforms: linux/amd64,linux/arm,linux/arm64
+          platforms: linux/amd64
+          build-args: |
+            REVISION=${{ github.sha }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha, scope=${{ github.workflow }}
+          cache-to: type=gha, scope=${{ github.workflow}}

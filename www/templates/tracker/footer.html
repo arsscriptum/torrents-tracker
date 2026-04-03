@@ -1,0 +1,12 @@
+<footer class="w-100-footer">
+    <small class="footer-version">Version: {{ site_version }} # {{ site_revision }} {{ site_branch }}</small>
+    <small class="copyrights">&copy; copyright 2009-2024, arsscriptum</small>
+    
+    <div class="footer-section follow-links mt-2">quick links<br>
+        <ul class="footer-section">
+            <li class="footer-test"><a href="{% url 'privacy_policy' %}">privacy</a></li>
+            <li><a href="{% url 'contact_us' %}">contact</a></li>
+            <li><a href="{% url 'test_fonts' %}">test_fonts</a></li>
+        </ul>
+    </div>
+</footer>

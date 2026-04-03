@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% block about_page %}
+<div class="container-fluid container__wrapper">
+    <div class="container">
+        <div class="site__wrapper_2cols">
+          <div class="m-100 mt-3" id="informations-square">
+            <h5 class="text-warning data-regular">About Torrents-Tracker Application</h5>
+            <p class='Revalia Regular' style='font-family: "Revalia Regular"; color: #ea8600;'>
+Torrents-Tracker is Django-based web application that I wrote to facilitate searching for movies, TV Shows, and other medias through popular torrent indexing services like "The Pirate Bay (TPB)" and "1337x".
+                 <h5 class="text-warning data-regular">The main advantages of using this tool are:</h5>
+                 <small class='Revalia Regular' style='font-family: "Revalia Regular"; color: #ea8600;'>&#8226; Integrated VPN: you don't need to worry about hiding your search requests from you ISP. If you use a VPN service, you may forget to enable it, with this tool, the VPN is active for all the request made by the tool</small><br>
+                 <small class='Revalia Regular' style='font-family: "Revalia Regular"; color: #ea8600;'>&#8226; No ads, no trackers, just pure data: you will not be presented with any ads nor any data you don't want while using Torrents-Tracker</small><br>
+            </p>
+                    
+    
+          <!-- Map display section -->
+          <div class="m-100 mt-3" id="map-square">
+            <h5 class="text-warning data-regular">Your IP Location on the Map</h5>
+            <div id="map" style="width: 80%; height: 300px;">
+                {{ map_html|safe }}
+            </div>
+        </div>
+
+        <div class="m-100 mt-3" id="db-version">
+            <h5 class="text-warning data-regular">Database Information</h5>
+            <p class='Revalia Regular' style='font-family: "Revalia Regular"; color: #ea8600;'>
+                Current Database Version: {{ current_db_version }}<br>
+                Latest Database Version: {{ latest_db_version }}
+            </p>
+            {% if new_version_available %}
+                <p class='Revalia Regular' style='font-family: "Revalia Regular"; color: red; font-weight: bold;'>
+                    New Version Available!
+                </p>
+            {% endif %}
+        </div>
+
+          </div>
+
+          <div class="m-100 mt-3" id="table-square">
+            <h5><small class="text-warning data-regular">Current External IP Address: </small><small class="ipaddress-normaltext">{{ external_ip }}</small></h5>
+            <table class="ipinfo-table">
+                <tr class="ipinfo-tr">
+                    <th class="ipinfo-th">Field</th>
+                    <th class="ipinfo-th">Value</th>
+                </tr>
+                <tr class="ipinfo-tr">
+                    <td class="ipinfo-th">IP Address</td>
+                    <td class="ipinfo-th">{{ ip_info.ip }}</td>
+                </tr>
+                <tr class="ipinfo-tr">
+                    <td class="ipinfo-th">Hostname</td>
+                    <td class="ipinfo-th">{{ ip_info.hostname }}</td>
+                </tr>
+                <tr class="ipinfo-tr">
+                    <td class="ipinfo-th">City</td>
+                    <td class="ipinfo-th">{{ ip_info.city }}</td>
+                </tr>
+                <tr class="ipinfo-tr">
+                    <td class="ipinfo-th">Region</td>
+                    <td class="ipinfo-th">{{ ip_info.region }}</td>
+                </tr>
+                <tr class="ipinfo-tr">
+                    <td class="ipinfo-th">Country</td>
+                    <td class="ipinfo-th">{{ ip_info.country }}</td>
+                </tr>
+                <tr class="ipinfo-tr">
+                    <td class="ipinfo-th">Location</td>
+                    <td class="ipinfo-th">{{ ip_info.loc }}</td>
+                </tr>
+                <tr class="ipinfo-tr">
+                    <td class="ipinfo-th">Organization</td>
+                    <td class="ipinfo-th">{{ ip_info.org }}</td>
+                </tr>
+                <tr class="ipinfo-tr">
+                    <td class="ipinfo-th">Postal Code</td>
+                    <td class="ipinfo-th">{{ ip_info.postal }}</td>
+                </tr>
+                <tr class="ipinfo-tr">
+                    <td class="ipinfo-th">Timezone</td>
+                    <td class="ipinfo-th">{{ ip_info.timezone }}</td>
+                </tr>
+            </table>
+
+            <div class="m-100 mt-3" id="trackers-table">
+                <h5 class="text-warning data-regular">Trackers in Use</h5>
+                <p><strong>Latest Version:</strong> {{ latest_version }}</p>
+            
+                <table class="ipinfo-table">
+                    <thead>
+                        <tr class="ipinfo-tr">
+                            <th class="ipinfo-th">Tracker URL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tracker in trackers %}
+                        <tr class="ipinfo-tr">
+                            <td class="ipinfo-th">{{ tracker }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr class="ipinfo-tr">
+                            <td class="ipinfo-th">No trackers available.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            
+            
+          </div>
+
+
+        </div>
+
+
+
+
+    </div>
+
+    
+
+</div>
+
+{% endblock %}

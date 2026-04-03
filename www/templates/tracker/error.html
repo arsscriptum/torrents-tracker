@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="alert-heading-custom alert-warning text-center" role="alert">
+        <h4 class="alert-heading">Warning!</h4>
+        <p>{{ message }}</p>
+        <hr>
+        <p class="mb-0">Please check your configuration and try again.</p>
+    </div>
+    <div class="text-center mt-4">
+        <a href="{% url 'home' %}" class="btn btn-primary">Return to Home</a>
+    </div>
+</div>
+{% endblock %}

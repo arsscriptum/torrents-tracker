@@ -1,0 +1,70 @@
+services:
+  torrents-tracker:
+    image: arsscriptum/torrents-tracker:latest
+    container_name: torrents-tracker
+    build: .
+    command: python manage.py runserver 0.0.0.0:7070
+    volumes:
+      - '/home/services/torrents-tracker/db:/db'
+      - '/home/services/torrents-tracker/logs:/logs'
+      - '/home/services/torrents-tracker:/app'
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - '/home/services/vpn/config:/vpnconfig'
+      - '/mnt/datassd/Transfers/Completed:/Completed'
+      - '/mnt/datassd/Nouveautes:/mnt/datassd/Nouveautes'
+    environment:
+      - PUID=1000
+      - PGID=1000
+    depends_on:
+      - transmission-openvpn
+    network_mode: service:transmission-openvpn  # Share network stack with VPN container
+
+  transmission-openvpn:
+    image: arsscriptum/docker.transmission-openvpn:latest
+    container_name: transmissionvpn
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+    volumes:
+      - '/mnt/datassd/Transfers/Incomplete:/Incomplete'
+      - '/mnt/datassd/Transfers/Completed:/Completed'
+      - '/home/services/vpn/scripts:/scripts'
+      - '/home/services/vpn/data:/data'
+      - '/home/services/vpn/config:/config'  # make sure all the .ovpn files are in this folder!
+    environment:
+      - OPENVPN_PROVIDER=PROTONVPN
+      - OPENVPN_CONFIG=nl.protonvpn.udp
+      - OPENVPN_USERNAME=${OPENVPN_USERNAME}
+      - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
+      - VPN_ENABLED=yes
+      - VPN_EXPECTED_CITY="Amsterdam"
+      - VPN_EXPECTED_REGION="North Holland"
+      - VPN_EXPECTED_COUNTRY="NL"
+      - VPN_EXPECTED_TIMEZONE="Europe/Amsterdam"
+      - VPN_EXPECTED_POSTAL=""
+      - TRANSMISSION_INCOMPLETE_DIR_ENABLED=true
+      - TRANSMISSION_DOWNLOAD_DIR=/Completed
+      - TRANSMISSION_INCOMPLETE_DIR=/Incomplete
+      - DEBUG=true
+      - LOG_TO_STDOUT=true
+      - ENABLE_UFW=false
+      - DROP_DEFAULT_ROUTE=false
+      - CREATE_TUN_DEVICE=true
+      - LAN_NETWORK=10.0.0.0/24
+      - NAME_SERVERS=1.1.1.1,1.0.0.1
+      - LOCAL_NETWORK=10.0.0.0/24
+      - TZ=America/New_York
+      - PUID=1000
+      - PGID=1000
+    ports:
+      - "7070:7070"  # Expose port 7070 on the VPN container
+      - "9091:9091"
+      - "7071:8080"  # Expose port 8080 for access
+    logging:
+      driver: "json-file"
+      options:
+        max-size: 10m
+

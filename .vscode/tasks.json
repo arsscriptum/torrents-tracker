@@ -1,0 +1,50 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build Docker Project - Development",
+      "type": "shell",
+      "command": "./scripts/build.sh",
+      "args": ["--debug"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Rebuild Docker Project",
+      "type": "shell",
+      "command": "./scripts/build_project.sh",
+      "args": ["--clean"],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build Docker Project in Prod",
+      "type": "shell",
+      "command": "./scripts/build_project.sh",
+      "args": ["prod"],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    }    
+  ]
+}

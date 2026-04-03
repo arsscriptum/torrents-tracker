@@ -1,0 +1,15 @@
+.git
+.env
+*.pyc
+__pycache__/
+logs/
+db/
+db.sqlite3
+static/
+*.tmp
+*.tmp.png
+state.json
+state_old.json
+scripts/
+doc/
+yaml/

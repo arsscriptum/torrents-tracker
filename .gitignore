@@ -1,0 +1,36 @@
+# Ignore Python cache files
+**/__pycache__/
+
+log/
+logs/
+mnt
+mnt/**
+
+state.json
+state_old.json
+
+compose
+
+# Ignore scraping logs
+scraping_logs.log
+
+.env
+
+# virtual environment
+env
+myenv
+env/**
+myenv/**
+temp-env/**
+# compiled stuff
+*.pyc
+
+
+static
+static/**
+
+*.tmp 
+
+*.tmp.png
+
+.env

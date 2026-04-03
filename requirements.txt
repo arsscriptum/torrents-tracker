@@ -1,0 +1,9 @@
+aiohttp==3.13.4
+asyncio==3.4.3
+beautifulsoup4==4.9.3
+cloudscraper==1.2.56
+Django==4.2.29
+humanize==4.9.0
+whitenoise==5.2.0
+folium
+docker

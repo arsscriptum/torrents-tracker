@@ -1,0 +1,21 @@
+
+<div class="mobile-menu">
+    <i id="close-menu" class="fas fa-times"></i>
+    <h4 class="dropdown-menu-item"><a href="{% url 'index' %}">home</a></h4>
+    <h4 class="dropdown-menu-item"><a href="{% url 'discover' %}">discover</a></h4>
+    <h4 class="dropdown-menu-item"><a href="{% url 'transfers' %}">transfers</a></h4>
+    <h4 class="dropdown-menu-item"><a href="{% url 'site_options' %}">options</a></h4>
+    <h4 class="dropdown-menu-item"><a href="{% url 'about' %}">about</a></h4>
+
+</div>
+<nav class="navbar-main">
+    <i id="menu-bar" class="fas fa-bars"></i>
+    <a href="{% url 'index' %}" class="navbar-main__brand">torrents-tracker</a><span class="headline">vpn-enabled torrents search tool</span>
+    <ul class="navbar-main-list__container" id="nav_nav">
+        <li><a href="{% url 'index' %}">home</a></li>
+        <li><a href="{% url 'discover' %}">discover</a></li>
+        <li><a href="{% url 'transfers' %}">transfers</a></li>
+        <li><a href="{% url 'site_options' %}">options</a></li>
+        <li><a href="{% url 'about' %}">about</a></li>
+    </ul>
+</nav>

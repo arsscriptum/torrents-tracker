@@ -1,0 +1,5 @@
+{
+    "editor.hover.enabled": "off",
+    "html.hover.documentation": false,
+    "html.hover.references": false
+}

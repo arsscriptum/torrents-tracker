@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block movie_page %}
+<div class="container-fluid container__wrapper">
+    <div class="container">
+        <div class="site__wrapper">
+            <div class="row">
+                <div class="mycard col-lg-12 col-md-12 col-sm-10 games_post_single">
+                    <p class='Bungee Spice' style='font-family: "Bungee Spice"; font-weight: bold; text-align: center; font-size:1.8em;'>{{ movie.title }}</p>
+
+                    <div class="movie_post text-center">
+                        <img src="{{ movie.image_url }}" alt="{{ movie.title }}">
+                    </div>
+                    <div class="card-body">
+                        <h5 class="text-table-title">Release Year</h5><p class="text-table-data">{{ movie.release_date }}</p>
+                        <br>
+                        <h5 class="text-table-title">About movie:</h5><p class="text-table-data">{{ movie.synopsis }}</p>
+                 
+                        <div class="row mt-5">
+                            <h5 class="text-table-title">Movie details</h5>
+                            <div class="m-100 mt-3" id="table-square">
+                                <table class="ipinfo-table">
+                                    <tbody>
+                                        <tr class="ipinfo-tr">
+                                            <th class="ipinfo-th" scope="row">Genre</th>
+                                            <td class="ipinfo-th">{{ movie.genre }}</td>
+                                        </tr>
+                                        <tr class="ipinfo-tr">
+                                            <th class="ipinfo-th" scope="row">Origin Country</th>
+                                            <td class="ipinfo-th">{{ movie.origin_country }}</td>
+                                        </tr>
+                                        <tr class="ipinfo-tr">
+                                            <th class="ipinfo-th" scope="row">Origin Language</th>
+                                            <td class="ipinfo-th">{{ movie.origin_language }}</td>
+                                        </tr>
+                                        <tr class="ipinfo-tr">
+                                            <th class="ipinfo-th" scope="row">Release Date</th>
+                                            <td class="ipinfo-th">{{ movie.release_date }}</td>
+                                        </tr>
+                                        <tr class="ipinfo-tr">
+                                            <th class="ipinfo-th" scope="row">Vote Average</th>
+                                            <td class="ipinfo-th">{{ movie.vote_average }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Right Column: Trailer Video -->
+                            <div class="col-lg-6 col-md-12 text-center">
+                                <h5 class="text-warning data-regular">Trailer</h5>
+                                <div class="embed-responsive embed-responsive-16by9">
+                                    <iframe class="embed-responsive-item" 
+                                            src="https://www.youtube.com/embed/{{ movie.trailer_id }}" 
+                                            allowfullscreen>
+                                    </iframe>
+                                </div>
+                            </div
+                        </div>
+
+                        <div class="d-flex justify-content-center text-center mt-4">
+                            <a href="http://10.0.0.111:7070/tracker/searchTorrents?keywords={{ movie.title }}&sites=pirate_bay" class="download-button">Search</a><br>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>    
+    </div>
+</div>
+{% endblock %}
