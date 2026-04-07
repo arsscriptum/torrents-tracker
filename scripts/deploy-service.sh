@@ -35,6 +35,9 @@ COMPFILE_PATH="$ROOT_DIR/docker-compose.yml"
 
 BUILD_OPT=0
 RESTART_OPT=0
+START_OPT=0
+STOP_OPT=0
+RESTART_OPT=0
 SYNC_ONLY_OPT=0
 
 LogCategory="deploy-service"
@@ -69,6 +72,8 @@ usage() {
     echo ""
     echo "  -b, --build        Rebuild the Docker image after syncing"
     echo "  -r, --restart      Restart containers after syncing (implies --build)"
+    echo "  -c, --create       Start containers"
+    echo "  -t, --terminate    Terminate containers"
     echo "  -s, --sync-only    Sync files only, no Docker operations"
     echo "  -h, --help         Show this help message"
     echo ""
@@ -85,6 +90,8 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         -b|--build)     BUILD_OPT=1 ;;
         -r|--restart)   RESTART_OPT=1; BUILD_OPT=1 ;;
+        -t|--terminate)   STOP_OPT=1; BUILD_OPT=0 ;;
+        -c|--create)   START_OPT=1; BUILD_OPT=0 ;;
         -s|--sync-only) SYNC_ONLY_OPT=1 ;;
         -h|--help)      usage ;;
         *) log_warning "Unknown option: $1" ;;
@@ -181,7 +188,43 @@ if [[ "$RESTART_OPT" -eq 1 ]]; then
     echo ""
     docker compose ps
     echo ""
+
+elif [[ "$START_OPT" -eq 1 ]]; then
+    log_info "Starting containers..."
+    cd "$ROOT_DIR" || fatal "Cannot cd to $ROOT_DIR"
+    docker compose down >> "$LOG_FILE" 2>&1
+    docker compose up -d >> "$LOG_FILE" 2>&1
+
+    if [[ $? -ne 0 ]]; then
+        fatal "docker compose up failed — check $LOG_FILE for details"
+    fi
+
+    log_ok "Containers are up"
+
+    echo ""
+    docker compose ps
+    echo ""
+
+elif [[ "$STOP_OPT" -eq 1 ]]; then
+    log_info "Stopping containers..."
+    cd "$ROOT_DIR" || fatal "Cannot cd to $ROOT_DIR"
+
+    docker compose down >> "$LOG_FILE" 2>&1
+
+    if [[ $? -ne 0 ]]; then
+        fatal "docker compose up failed — check $LOG_FILE for details"
+    fi
+
+    log_ok "Containers are up"
+
+    echo ""
+    docker compose ps
+    echo ""
 fi
+
+
+
+
 
 log_ok "Deploy complete"
 exit 0
