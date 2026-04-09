@@ -34,9 +34,17 @@ services:
       - '/home/services/vpn/scripts:/scripts'
       - '/home/services/vpn/data:/data'
       - '/home/services/vpn/config:/config'  # make sure all the .ovpn files are in this folder!
+      # Override the contrib protonvpn config dir baked into the image. The
+      # upstream NL config has remotes on ports 4569/80/5060/51820 that
+      # ECONNREFUSED/EHOSTUNREACH from this host; the file in etc-protonvpn
+      # forces every remote to udp/1194, which actually connects.
+      # Combined with VPN_CONFIG_SOURCE=internal below, this skips the
+      # github fetch and uses our overlay verbatim.
+      - '/home/services/vpn/etc-protonvpn:/etc/openvpn/protonvpn'
     environment:
       - OPENVPN_PROVIDER=PROTONVPN
       - OPENVPN_CONFIG=nl.protonvpn.udp
+      - VPN_CONFIG_SOURCE=internal  # use the bind-mounted /etc/openvpn/protonvpn instead of github fetch
       - OPENVPN_USERNAME=${OPENVPN_USERNAME}
       - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
       - VPN_ENABLED=yes
