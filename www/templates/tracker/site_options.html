@@ -38,42 +38,25 @@
           </div>
           <div class="m-100 mt-3" id="table-square">
             <h5 class="text-warning data-regular">select vpn exit location:</h5>
-            <br><br>
+            {% if not container_running %}
+            <p class="text-muted mt-2">VPN container is not running — start docker compose to manage VPN.</p>
+            {% elif not vpn_configs %}
+            <p class="text-muted mt-2">No VPN configs found in container.</p>
+            {% else %}
+            <br>
+            {% for vpn in vpn_configs %}
             <div class="form-check">
-                <label class="form-check-label text-white"><input type="checkbox" class="form-check-input" name="vpn_location" value="nl.protonvpn.udp" id="nl.protonvpn.udp">Netherlands (Amsterdam)</label>
+                <label class="form-check-label text-white">
+                    <input type="checkbox" class="form-check-input" name="vpn_location"
+                           value="{{ vpn }}" id="{{ vpn }}"
+                           {% if vpn == current_vpn %}checked{% endif %}>
+                    {{ vpn }}{% if vpn == current_vpn %} <span class="text-success">(active)</span>{% endif %}
+                </label>
             </div>
-            <div class="form-check">
-                <label class="form-check-label text-white"><input type="checkbox" class="form-check-input" name="vpn_location" value="ca-169.protonvpn.udp" id="ca-169.protonvpn.udp">Canada (Toronto)</label>
-            </div>
-            <div class="form-check">
-                <label class="form-check-label text-white text-muted"><input type="checkbox" class="form-check-input" name="vpn_location" value="fr.protonvpn.udp" id="fr.protonvpn.udp" disabled>France (Paris) — config not installed</label>
-            </div>
-            <div class="form-check">
-                <label class="form-check-label text-white text-muted"><input type="checkbox" class="form-check-input" name="vpn_location" value="ch.protonvpn.udp" id="ch.protonvpn.udp" disabled>Switzerland (Zurich) — config not installed</label>
-            </div>
-            <div class="form-check">
-                <label class="form-check-label text-white text-muted"><input type="checkbox" class="form-check-input" name="vpn_location" value="se.protonvpn.udp" id="se.protonvpn.udp" disabled>Sweden (Stockholm) — config not installed</label>
-            </div>
-            <div class="form-check">
-                <label class="form-check-label text-white text-muted"><input type="checkbox" class="form-check-input" name="vpn_location" value="uk.protonvpn.udp" id="uk.protonvpn.udp" disabled>United Kingdom (London) — config not installed</label>
-            </div>
-            <div class="form-check">
-                <label class="form-check-label text-white text-muted"><input type="checkbox" class="form-check-input" name="vpn_location" value="is.protonvpn.udp" id="is.protonvpn.udp" disabled>Iceland (Reykjavik) — config not installed</label>
-            </div>
-            <div class="form-check">
-                <label class="form-check-label text-white text-muted"><input type="checkbox" class="form-check-input" name="vpn_location" value="ro.protonvpn.udp" id="ro.protonvpn.udp" disabled>Romania (Bucharest) — config not installed</label>
-            </div>
-            <div class="form-check">
-                <label class="form-check-label text-white text-muted"><input type="checkbox" class="form-check-input" name="vpn_location" value="jp.protonvpn.udp" id="jp.protonvpn.udp" disabled>Japan (Tokyo) — config not installed</label>
-            </div>
-            <div class="form-check">
-                <label class="form-check-label text-white text-muted"><input type="checkbox" class="form-check-input" name="vpn_location" value="au.protonvpn.udp" id="au.protonvpn.udp" disabled>Australia (Sydney) — config not installed</label>
-            </div>
-            <div class="form-check">
-                <label class="form-check-label text-white text-muted"><input type="checkbox" class="form-check-input" name="vpn_location" value="br.protonvpn.udp" id="br.protonvpn.udp" disabled>Brazil (São Paulo) — config not installed</label>
-            </div>
+            {% endfor %}
             <br>
             <button type="button" class="vpnconnect-box__button" onclick="connectVPN()">connect!</button>
+            {% endif %}
             <script>
               function connectVPN() {
                 const selectedCheckbox = document.querySelector('input[name="vpn_location"]:checked');

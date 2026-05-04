@@ -37,7 +37,32 @@ def searchTorrents(request):
 
 
 def site_options(request):
-    return render(request, "tracker/site_options.html")
+    vpn_configs = []
+    current_vpn = ''
+    container_running = False
+    try:
+        import docker as docker_sdk
+        client = docker_sdk.from_env()
+        container = client.containers.get('transmissionvpn')
+        env_vars = {
+            e.split('=')[0]: e.split('=', 1)[1]
+            for e in container.attrs['Config']['Env'] if '=' in e
+        }
+        current_vpn = env_vars.get('OPENVPN_CONFIG', '')
+        provider = env_vars.get('OPENVPN_PROVIDER', 'PROTONVPN').lower()
+        container_running = container.status == 'running'
+        if container_running:
+            exit_code, output = container.exec_run(f'ls /etc/openvpn/{provider}/')
+            if exit_code == 0:
+                files = output.decode().strip().split('\n')
+                vpn_configs = sorted(f.replace('.ovpn', '') for f in files if f.endswith('.ovpn'))
+    except Exception:
+        pass
+    return render(request, "tracker/site_options.html", {
+        'vpn_configs': vpn_configs,
+        'current_vpn': current_vpn,
+        'container_running': container_running,
+    })
 
 def test_fonts(request):
     context = {}
@@ -591,9 +616,14 @@ def manage_vpn(request):
         new_ovpn = f'{config_dir}/{vpn_id}.ovpn'
         active_ovpn = f'{config_dir}/{current_config}.ovpn'
 
-        # Copy new config over the active one, then SIGHUP openvpn to reload
-        cmd = f'bash -c "cp {new_ovpn} {active_ovpn} && kill -HUP $(pgrep openvpn)"'
-        exit_code, output = container.exec_run(cmd)
+        # Copy new config over the active one (skip if same file), then SIGHUP openvpn.
+        # pkill -HUP openvpn returns 1 when no process matched — use || true so the
+        # overall exit code reflects only whether the cp succeeded.
+        if new_ovpn != active_ovpn:
+            shell_cmd = f'cp {new_ovpn} {active_ovpn} && (pkill -HUP -x openvpn || true)'
+        else:
+            shell_cmd = 'pkill -HUP -x openvpn || true'
+        exit_code, output = container.exec_run(['bash', '-c', shell_cmd])
 
         if exit_code == 0:
             return JsonResponse({'success': True, 'message': f'Switching VPN to {vpn_id}. Reconnecting...'})
