@@ -43,15 +43,21 @@ services:
       - '/home/services/vpn/etc-protonvpn:/etc/openvpn/protonvpn'
     environment:
       - OPENVPN_PROVIDER=PROTONVPN
-      - OPENVPN_CONFIG=nl.protonvpn.udp
+      - OPENVPN_CONFIG=ca-169.protonvpn.udp
       - VPN_CONFIG_SOURCE=internal  # use the bind-mounted /etc/openvpn/protonvpn instead of github fetch
+      # Don't remap SIGUSR1 to SIGTERM. The default 'remap-usr1 SIGTERM' that
+      # modify-openvpn-config.sh injects makes OpenVPN HARD-EXIT on a single
+      # poll timeout, so the container only ever tries one random remote per
+      # docker restart. Leaving SIGUSR1 alone lets OpenVPN soft-restart and
+      # cycle through the remote list itself — same approach qbittorrentvpn uses.
+      - CONFIG_MOD_REMAP_USR1=0
       - OPENVPN_USERNAME=${OPENVPN_USERNAME}
       - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
       - VPN_ENABLED=yes
-      - VPN_EXPECTED_CITY="Amsterdam"
-      - VPN_EXPECTED_REGION="North Holland"
-      - VPN_EXPECTED_COUNTRY="NL"
-      - VPN_EXPECTED_TIMEZONE="Europe/Amsterdam"
+      - VPN_EXPECTED_CITY=""
+      - VPN_EXPECTED_REGION=""
+      - VPN_EXPECTED_COUNTRY="CA"
+      - VPN_EXPECTED_TIMEZONE="America/Toronto"
       - VPN_EXPECTED_POSTAL=""
       - TRANSMISSION_INCOMPLETE_DIR_ENABLED=true
       - TRANSMISSION_DOWNLOAD_DIR=/Completed

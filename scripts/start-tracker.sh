@@ -54,7 +54,7 @@ VPN_CONTAINER="transmissionvpn"
 MAX_DISK_PCT="${MAX_DISK_PCT:-92}"           # abort if /mnt/datassd usage above this
 DATA_MOUNT="${DATA_MOUNT:-/mnt/datassd}"
 APP_URL="${APP_URL:-http://127.0.0.1:7070/tracker/}"
-EXPECTED_COUNTRY="${EXPECTED_COUNTRY:-NL}"
+EXPECTED_COUNTRY="${EXPECTED_COUNTRY:-CA}"
 WAIT_VPN_TIMEOUT="${WAIT_VPN_TIMEOUT:-180}"  # seconds to wait for VPN tunnel to be up
 WAIT_APP_TIMEOUT="${WAIT_APP_TIMEOUT:-60}"   # seconds to wait for app to respond
 STABLE_WAIT="${STABLE_WAIT:-15}"             # post-start stability window
@@ -249,6 +249,28 @@ if [[ "$vpn_country" != "$EXPECTED_COUNTRY" ]]; then
 fi
 
 log_ok "VPN tunnel up — exiting via $vpn_country (ip=$vpn_ip)"
+
+# =========================================================
+# Repair stale app namespace if VPN was recreated
+# =========================================================
+# When transmissionvpn is recreated but torrents-tracker was already up,
+# the app keeps a 'container:<old-vpn-id>' NetworkMode pointing at the
+# now-gone VPN container. The app process keeps running but its published
+# ports are unreachable. Detect that case by comparing IDs and force-recreate
+# the app so it joins the new VPN namespace.
+
+vpn_id=$(docker inspect -f '{{.Id}}' "$VPN_CONTAINER" 2>/dev/null || true)
+app_netmode=$(docker inspect -f '{{.HostConfig.NetworkMode}}' "$APP_CONTAINER" 2>/dev/null || true)
+app_linked_id="${app_netmode#container:}"
+
+if [[ -n "$vpn_id" && -n "$app_linked_id" && "$vpn_id" != "$app_linked_id" ]]; then
+    log_warning "App container is linked to a stale VPN namespace — recreating $APP_CONTAINER"
+    if ! docker compose --env-file "$ENV_FILE" up -d --force-recreate "$APP_CONTAINER" >> "$LOG_FILE" 2>&1; then
+        log_error "Failed to recreate $APP_CONTAINER — see $LOG_FILE"
+        exit 3
+    fi
+    log_ok "App container recreated against current VPN namespace"
+fi
 
 # =========================================================
 # Wait for the tracker app to respond
