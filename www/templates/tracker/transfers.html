@@ -72,17 +72,23 @@
     }
 
     // ── AJAX torrent table ────────────────────────────────────
+    let _loadAttempt = 0;
+
     function loadTorrents() {
+        _loadAttempt++;
+        const attempt = _loadAttempt;
         fetch("{% url 'torrent_list' %}")
             .then(r => {
                 if (!r.ok) throw new Error('Server error ' + r.status);
                 return r.json();
             })
             .then(data => {
+                if (attempt !== _loadAttempt) return; // superseded
                 const tbody = document.getElementById('torrent-tbody');
                 if (!data.success) {
-                    tbody.innerHTML = `<tr><td colspan="9" class="text-danger" style="padding:20px;">
-                        Could not connect to Transmission: ${esc(data.error)}</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="9" class="text-warning" style="padding:20px;">
+                        Retrying&hellip; (${esc(data.error)})</td></tr>`;
+                    setTimeout(loadTorrents, 3000);
                     return;
                 }
                 if (!data.torrents.length) {
@@ -113,8 +119,11 @@
                 `).join('');
             })
             .catch(err => {
+                if (attempt !== _loadAttempt) return;
                 document.getElementById('torrent-tbody').innerHTML =
-                    `<tr><td colspan="9" class="text-danger" style="padding:20px;">Error: ${esc(String(err))}</td></tr>`;
+                    `<tr><td colspan="9" class="text-warning" style="padding:20px;">
+                        Retrying&hellip; (${esc(String(err))})</td></tr>`;
+                setTimeout(loadTorrents, 3000);
             });
     }
 

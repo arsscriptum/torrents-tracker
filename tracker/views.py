@@ -512,17 +512,36 @@ TRANSMISSION_STATUS_MAP = {
 
 _transmission_session_id = ''
 
+def _prime_transmission_session():
+    """Fetch and cache the Transmission session ID in a background thread at startup."""
+    global _transmission_session_id
+    try:
+        r = requests.post(TRANSMISSION_URL,
+                          json={'method': 'session-get', 'arguments': {}},
+                          headers={'Content-Type': 'application/json', 'Connection': 'close'},
+                          timeout=30)
+        if r.status_code == 409:
+            _transmission_session_id = r.headers.get('X-Transmission-Session-Id', '')
+    except Exception:
+        pass  # best-effort; first real request will retry
+
+threading.Thread(target=_prime_transmission_session, daemon=True).start()
+
+
 def _transmission_request(method, arguments):
     """POST to Transmission RPC, refreshing the session ID on 409."""
     global _transmission_session_id
     payload = {'method': method, 'arguments': arguments}
+    # 'Connection: close' forces a fresh TCP connection every call — prevents
+    # urllib3's pool from reusing a connection that Transmission already closed.
     headers = {'X-Transmission-Session-Id': _transmission_session_id,
-               'Content-Type': 'application/json'}
-    response = requests.post(TRANSMISSION_URL, json=payload, headers=headers, timeout=15)
+               'Content-Type': 'application/json',
+               'Connection': 'close'}
+    response = requests.post(TRANSMISSION_URL, json=payload, headers=headers, timeout=20)
     if response.status_code == 409:
         _transmission_session_id = response.headers.get('X-Transmission-Session-Id', '')
         headers['X-Transmission-Session-Id'] = _transmission_session_id
-        response = requests.post(TRANSMISSION_URL, json=payload, headers=headers, timeout=15)
+        response = requests.post(TRANSMISSION_URL, json=payload, headers=headers, timeout=20)
     return response.json()
 
 
