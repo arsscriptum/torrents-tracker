@@ -5,70 +5,54 @@
         <div class="site__wrapper">
             <h5 class="text-warning mt-3 mb-3 data-regular">Active Transfers</h5>
 
-            {% if error %}
-                <div class="alert alert-danger">Could not connect to Transmission: {{ error }}</div>
-            {% elif not torrents %}
-                <p class="text-white">No active transfers.</p>
-            {% else %}
-                <div class="mb-3 d-flex align-items-center gap-3 flex-wrap">
-                    <button class="vpnconnect-box__button" onclick="cancelSelected()">Cancel</button>
-                    <button class="vpnconnect-box__button" onclick="exportSelected()">Export</button>
-                    <button class="configinput-box__button" onclick="location.reload()">Refresh</button>
-                    <div class="d-flex align-items-center gap-2 ms-3">
-                        <label class="form-check-label text-white">
-                            <input type="checkbox" class="form-check-input me-1" id="auto-refresh-toggle"> Auto-refresh
-                        </label>
-                        <input type="number" id="refresh-interval" value="10" min="3" max="300"
-                               style="width:60px;" class="configinput-box__input text-center">
-                        <small class="text-white">sec</small>
-                        <small id="refresh-countdown" class="text-warning ms-1"></small>
-                    </div>
-                </div>
-
-                <table class="table _table table-dark">
-                    <thead>
-                        <tr>
-                            <th><input type="checkbox" id="select-all" title="Select all"></th>
-                            <th>Name</th>
-                            <th>Status</th>
-                            <th>Progress</th>
-                            <th>Down</th>
-                            <th>Up</th>
-                            <th>Size</th>
-                            <th>Peers</th>
-                            <th>ETA</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for t in torrents %}
-                        <tr {% if t.error %}class="table-danger"{% endif %}>
-                            <td>
-                                <input type="checkbox"
-                                       class="torrent-checkbox"
-                                       data-id="{{ t.id }}"
-                                       data-done="{{ t.done|yesno:'true,false' }}">
-                            </td>
-                            <td title="{{ t.error }}">{{ t.name }}</td>
-                            <td>{{ t.status }}</td>
-                            <td>
-                                <div class="progress" style="min-width:80px; height:18px;">
-                                    <div class="progress-bar {% if t.done %}bg-success{% else %}bg-warning{% endif %}"
-                                         role="progressbar"
-                                         style="width: {{ t.progress }}%">
-                                        {{ t.progress }}%
-                                    </div>
-                                </div>
-                            </td>
-                            <td>{{ t.down }}</td>
-                            <td>{{ t.up }}</td>
-                            <td>{{ t.size }}</td>
-                            <td>{{ t.peers }}</td>
-                            <td>{{ t.eta }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            {% if export_active %}
+            <div id="transfer-banner" style="width:100%; padding:8px 14px; margin-bottom:8px;
+                 background-color:rgba(200,160,0,0.15); border:1px solid rgb(200,160,0);
+                 border-radius:4px; color:#ffd700; font-size:0.85rem;">
+                &#9203; Transfer in progress since {{ export_state.started_at }} &mdash;
+                {% for f in export_state.files %}
+                    <strong>{{ f.name }}</strong>{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </div>
             {% endif %}
+
+            <div class="mb-3 d-flex align-items-center gap-3 flex-wrap">
+                <button class="vpnconnect-box__button" onclick="cancelSelected()">Cancel</button>
+                <button class="vpnconnect-box__button" onclick="exportSelected()"
+                        id="export-btn"
+                        {% if export_active %}disabled style="opacity:0.45; cursor:not-allowed;"{% endif %}>Export</button>
+                <button class="configinput-box__button" onclick="location.reload()">Refresh</button>
+                <div class="d-flex align-items-center gap-2 ms-3">
+                    <label class="form-check-label text-white">
+                        <input type="checkbox" class="form-check-input me-1" id="auto-refresh-toggle"> Auto-refresh
+                    </label>
+                    <input type="number" id="refresh-interval" value="10" min="3" max="300"
+                           style="width:60px;" class="configinput-box__input text-center">
+                    <small class="text-white">sec</small>
+                    <small id="refresh-countdown" class="text-warning ms-1"></small>
+                </div>
+            </div>
+
+            <table class="table _table table-dark">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="select-all" title="Select all"></th>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Progress</th>
+                        <th>Down</th>
+                        <th>Up</th>
+                        <th>Size</th>
+                        <th>Peers</th>
+                        <th>ETA</th>
+                    </tr>
+                </thead>
+                <tbody id="torrent-tbody">
+                    <tr><td colspan="9" class="text-center text-white" style="padding:20px;">
+                        Loading&hellip;
+                    </td></tr>
+                </tbody>
+            </table>
 
         </div>
     </div>
@@ -76,24 +60,82 @@
 
 <script>
     document.getElementById('select-all')?.addEventListener('change', function() {
-        document.querySelectorAll('.torrent-checkbox').forEach(cb => cb.checked = this.checked);
+        document.querySelectorAll('.torrent-checkbox:not([disabled])').forEach(cb => cb.checked = this.checked);
     });
 
     function getSelectedIds() {
         return [...document.querySelectorAll('.torrent-checkbox:checked')].map(cb => parseInt(cb.dataset.id));
     }
 
+    function esc(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ── AJAX torrent table ────────────────────────────────────
+    function loadTorrents() {
+        fetch("{% url 'torrent_list' %}")
+            .then(r => {
+                if (!r.ok) throw new Error('Server error ' + r.status);
+                return r.json();
+            })
+            .then(data => {
+                const tbody = document.getElementById('torrent-tbody');
+                if (!data.success) {
+                    tbody.innerHTML = `<tr><td colspan="9" class="text-danger" style="padding:20px;">
+                        Could not connect to Transmission: ${esc(data.error)}</td></tr>`;
+                    return;
+                }
+                if (!data.torrents.length) {
+                    tbody.innerHTML = '<tr><td colspan="9" class="text-white" style="padding:20px;">No active transfers.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = data.torrents.map(t => `
+                    <tr ${t.exporting ? 'style="background-color:rgba(180,140,0,0.25);"' : (t.error ? 'class="table-danger"' : '')}>
+                        <td><input type="checkbox" class="torrent-checkbox"
+                                   data-id="${t.id}" data-done="${t.done}"
+                                   ${t.exporting ? 'disabled' : ''}></td>
+                        <td title="${esc(t.error)}" ${t.exporting ? 'style="color:#ffd700;"' : ''}>${esc(t.name)}</td>
+                        <td ${t.exporting ? 'style="color:#ffd700;"' : ''}>${t.exporting ? 'Transferring' : esc(t.status)}</td>
+                        <td>
+                            <div class="progress" style="min-width:80px;height:18px;">
+                                <div class="progress-bar ${t.done ? 'bg-success' : 'bg-warning'}"
+                                     role="progressbar" style="width:${t.progress}%">
+                                    ${t.progress}%
+                                </div>
+                            </div>
+                        </td>
+                        <td>${esc(t.down)}</td>
+                        <td>${esc(t.up)}</td>
+                        <td>${esc(t.size)}</td>
+                        <td>${t.peers}</td>
+                        <td>${esc(t.eta)}</td>
+                    </tr>
+                `).join('');
+            })
+            .catch(err => {
+                document.getElementById('torrent-tbody').innerHTML =
+                    `<tr><td colspan="9" class="text-danger" style="padding:20px;">Error: ${esc(String(err))}</td></tr>`;
+            });
+    }
+
+    loadTorrents();
+    // ──────────────────────────────────────────────────────────
+
     function cancelSelected() {
         const ids = getSelectedIds();
         if (!ids.length) { alert('Select at least one transfer to cancel.'); return; }
         if (!confirm(`Cancel ${ids.length} transfer(s)? The downloaded files will be kept.`)) return;
 
+        stopAutoRefresh();
         fetch("{% url 'cancel_torrents' %}", {
             method: 'POST',
             headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
             body: JSON.stringify({ ids })
         })
-        .then(r => r.json())
+        .then(r => {
+            if (!r.ok) throw new Error('Server error ' + r.status);
+            return r.json();
+        })
         .then(data => { alert(data.message); if (data.success) location.reload(); })
         .catch(err => alert('Error: ' + err));
     }
@@ -103,11 +145,10 @@
     let countdownTimer = null;
     let remaining = 0;
 
-    const toggle   = document.getElementById('auto-refresh-toggle');
-    const input    = document.getElementById('refresh-interval');
+    const toggle    = document.getElementById('auto-refresh-toggle');
+    const input     = document.getElementById('refresh-interval');
     const countdown = document.getElementById('refresh-countdown');
 
-    // Restore saved settings
     if (localStorage.getItem('autoRefresh') === 'true') {
         toggle.checked = true;
         input.value = localStorage.getItem('refreshInterval') || 10;
@@ -144,6 +185,11 @@
     // ──────────────────────────────────────────────────────────
 
     function exportSelected() {
+        const btn = document.getElementById('export-btn');
+        if (btn && btn.disabled) return;
+
+        stopAutoRefresh();
+
         const ids = getSelectedIds();
         if (!ids.length) { alert('Select at least one completed transfer to export.'); return; }
         const hasDone = [...document.querySelectorAll('.torrent-checkbox:checked')].some(cb => cb.dataset.done === 'true');
@@ -154,9 +200,43 @@
             headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
             body: JSON.stringify({ ids })
         })
-        .then(r => r.json())
-        .then(data => { alert(data.message); location.reload(); })
-        .catch(err => alert('Error: ' + err));
+        .then(r => {
+            if (!r.ok) throw new Error('Server error ' + r.status);
+            return r.json();
+        })
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(err => alert('Export failed: ' + err));
     }
+
+    // ── Transfer status polling ───────────────────────────────
+    {% if export_active %}
+    (function pollTransferStatus() {
+        const timer = setInterval(function() {
+            fetch("{% url 'transfer_status' %}")
+                .then(r => r.json())
+                .then(function(data) {
+                    if (!data.active) {
+                        clearInterval(timer);
+                        const banner = document.getElementById('transfer-banner');
+                        if (banner) {
+                            banner.style.borderColor = 'rgb(0,180,0)';
+                            banner.style.backgroundColor = 'rgba(0,150,0,0.15)';
+                            banner.style.color = '#90ee90';
+                            banner.innerHTML = '&#10003; Transfer complete &mdash; reloading&hellip;';
+                        }
+                        setTimeout(() => location.reload(), 1500);
+                    }
+                })
+                .catch(function() {});
+        }, 3000);
+    })();
+    {% endif %}
+    // ──────────────────────────────────────────────────────────
 </script>
 {% endblock transfers_page %}

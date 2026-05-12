@@ -34,3 +34,5 @@ static/**
 *.tmp.png
 
 .env
+SCREEN_CAPTURES
+SCREEN_CAPTURES/**

@@ -1,8 +1,11 @@
 import requests
 import humanize
 import os
+import shutil
 import logging
+import threading
 import folium
+from datetime import datetime
 from .constants import InternalURLs,IndexersURLs
 from django.http import JsonResponse
 import json
@@ -15,6 +18,67 @@ from .search_utils import movie_search
 from django.utils.safestring import mark_safe
 from django.conf import settings
 from django.contrib import messages
+
+# ---------------------------------------------------------------------------
+# Async export state
+# ---------------------------------------------------------------------------
+EXPORT_STATE_FILE = '/logs/export_state.json'
+COMPLETED_DIR = '/Completed'
+EXPORT_DIR = '/mnt/datassd/Nouveautes'
+
+_export_thread: threading.Thread = None
+_export_lock = threading.Lock()
+
+
+def _read_export_state():
+    """Return the export state dict if a transfer is running, else None."""
+    with _export_lock:
+        thread_alive = _export_thread is not None and _export_thread.is_alive()
+    if not thread_alive:
+        try:
+            os.remove(EXPORT_STATE_FILE)
+        except OSError:
+            pass
+        return None
+    try:
+        with open(EXPORT_STATE_FILE) as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def _write_export_state(state):
+    try:
+        with open(EXPORT_STATE_FILE, 'w') as f:
+            json.dump(state, f)
+    except OSError:
+        pass
+
+
+def _do_export(state):
+    """Background thread: move files one by one, remove from Transmission, clean up."""
+    try:
+        for file_info in state['files']:
+            file_info['status'] = 'moving'
+            _write_export_state(state)
+            try:
+                shutil.move(file_info['src'], file_info['dst'])
+                file_info['status'] = 'done'
+            except Exception as exc:
+                file_info['status'] = f'error: {exc}'
+            _write_export_state(state)
+
+        done_ids = [f['id'] for f in state['files'] if f['status'] == 'done']
+        if done_ids:
+            try:
+                _transmission_request('torrent-remove', {'ids': done_ids, 'delete-local-data': False})
+            except Exception:
+                pass
+    finally:
+        try:
+            os.remove(EXPORT_STATE_FILE)
+        except OSError:
+            pass
 
 def index(request):
     return render(request, "tracker/index.html")
@@ -446,16 +510,36 @@ TRANSMISSION_STATUS_MAP = {
     3: 'Download queue', 4: 'Downloading', 5: 'Seed queue', 6: 'Seeding'
 }
 
+_transmission_session_id = ''
+
 def _transmission_request(method, arguments):
-    session_resp = requests.get(TRANSMISSION_URL)
-    session_id = session_resp.headers.get('X-Transmission-Session-Id', '')
-    headers = {'X-Transmission-Session-Id': session_id, 'Content-Type': 'application/json'}
-    response = requests.post(TRANSMISSION_URL, json={'method': method, 'arguments': arguments}, headers=headers)
+    """POST to Transmission RPC, refreshing the session ID on 409."""
+    global _transmission_session_id
+    payload = {'method': method, 'arguments': arguments}
+    headers = {'X-Transmission-Session-Id': _transmission_session_id,
+               'Content-Type': 'application/json'}
+    response = requests.post(TRANSMISSION_URL, json=payload, headers=headers, timeout=15)
+    if response.status_code == 409:
+        _transmission_session_id = response.headers.get('X-Transmission-Session-Id', '')
+        headers['X-Transmission-Session-Id'] = _transmission_session_id
+        response = requests.post(TRANSMISSION_URL, json=payload, headers=headers, timeout=15)
     return response.json()
 
 
 def transfers(request):
-    context = {'torrents': [], 'error': None, 'no_footer': True}
+    """Render the page immediately; torrent data loads via AJAX."""
+    state = _read_export_state()
+    return render(request, 'tracker/transfers.html', {
+        'no_footer':     True,
+        'export_active': bool(state),
+        'export_state':  state,
+    })
+
+
+def torrent_list(request):
+    """AJAX endpoint — returns torrent data from Transmission as JSON."""
+    state = _read_export_state()
+    transferring_names = {f['name'] for f in state.get('files', [])} if state else set()
     try:
         result = _transmission_request('torrent-get', {
             'fields': [
@@ -464,29 +548,29 @@ def transfers(request):
                 'errorString', 'downloadDir'
             ]
         })
-        if result.get('result') == 'success':
-            torrents = []
-            for t in result['arguments']['torrents']:
-                done = t['percentDone'] == 1.0
-                torrents.append({
-                    'id':       t['id'],
-                    'name':     t['name'],
-                    'status':   TRANSMISSION_STATUS_MAP.get(t['status'], 'Unknown'),
-                    'progress': round(t['percentDone'] * 100, 1),
-                    'done':     done,
-                    'down':     humanize.naturalsize(t['rateDownload']) + '/s',
-                    'up':       humanize.naturalsize(t['rateUpload']) + '/s',
-                    'size':     humanize.naturalsize(t['sizeWhenDone']),
-                    'peers':    t['peersConnected'],
-                    'eta':      humanize.naturaldelta(t['eta']) if t['eta'] > 0 else ('Done' if done else '∞'),
-                    'error':    t.get('errorString', ''),
-                })
-            context['torrents'] = torrents
-        else:
-            context['error'] = result.get('result', 'Unknown error from Transmission')
+        if result.get('result') != 'success':
+            return JsonResponse({'success': False, 'error': result.get('result', 'Unknown error')})
+
+        torrents = []
+        for t in result['arguments']['torrents']:
+            done = t['percentDone'] == 1.0
+            torrents.append({
+                'id':        t['id'],
+                'name':      t['name'],
+                'status':    TRANSMISSION_STATUS_MAP.get(t['status'], 'Unknown'),
+                'progress':  round(t['percentDone'] * 100, 1),
+                'done':      done,
+                'exporting': t['name'] in transferring_names,
+                'down':      humanize.naturalsize(t['rateDownload']) + '/s',
+                'up':        humanize.naturalsize(t['rateUpload']) + '/s',
+                'size':      humanize.naturalsize(t['sizeWhenDone']),
+                'peers':     t['peersConnected'],
+                'eta':       humanize.naturaldelta(t['eta']) if t['eta'] > 0 else ('Done' if done else '∞'),
+                'error':     t.get('errorString', ''),
+            })
+        return JsonResponse({'success': True, 'torrents': torrents})
     except Exception as e:
-        context['error'] = str(e)
-    return render(request, 'tracker/transfers.html', context)
+        return JsonResponse({'success': False, 'error': str(e)})
 
 
 def cancel_torrents(request):
@@ -507,46 +591,71 @@ def cancel_torrents(request):
 def export_torrents(request):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Invalid request method.'})
+
+    global _export_thread
+
+    with _export_lock:
+        if _export_thread is not None and _export_thread.is_alive():
+            return JsonResponse({'success': False, 'message': 'A transfer is already in progress. Wait for it to complete.'})
+
     try:
-        import shutil
         ids = json.loads(request.body).get('ids', [])
         if not ids:
             return JsonResponse({'success': False, 'message': 'No torrents selected.'})
 
         result = _transmission_request('torrent-get', {
             'ids': ids,
-            'fields': ['id', 'name', 'percentDone', 'downloadDir']
+            'fields': ['id', 'name', 'percentDone', 'sizeWhenDone', 'downloadDir']
         })
         if result.get('result') != 'success':
             return JsonResponse({'success': False, 'message': result.get('result')})
 
-        export_dir = '/mnt/datassd/Nouveautes'
-        exported, skipped, errors = [], [], []
+        all_torrents = result['arguments']['torrents']
+        ready   = [t for t in all_torrents if t['percentDone'] == 1.0]
+        skipped = [t['name'] for t in all_torrents if t['percentDone'] != 1.0]
 
-        for t in result['arguments']['torrents']:
-            if t['percentDone'] != 1.0:
-                skipped.append(t['name'])
-                continue
-            src = os.path.join('/Completed', t['name'])
-            dst = os.path.join(export_dir, t['name'])
-            try:
-                shutil.move(src, dst)
-                _transmission_request('torrent-remove', {'ids': [t['id']], 'delete-local-data': False})
-                exported.append(t['name'])
-            except Exception as e:
-                errors.append(f"{t['name']}: {e}")
+        if not ready:
+            return JsonResponse({'success': False, 'message': 'None of the selected torrents are complete yet.'})
 
-        msg_parts = []
-        if exported:
-            msg_parts.append(f"Exported {len(exported)}: {', '.join(exported)}")
+        state = {
+            'started_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'pid': os.getpid(),
+            'files': [
+                {
+                    'id':         t['id'],
+                    'name':       t['name'],
+                    'size_bytes': t.get('sizeWhenDone', 0),
+                    'src':        os.path.join(COMPLETED_DIR, t['name']),
+                    'dst':        os.path.join(EXPORT_DIR, t['name']),
+                    'status':     'queued',
+                }
+                for t in ready
+            ],
+        }
+        _write_export_state(state)
+
+        with _export_lock:
+            _export_thread = threading.Thread(target=_do_export, args=(state,), daemon=True)
+            _export_thread.start()
+
+        msg = f'Transfer started: {len(ready)} file(s).'
         if skipped:
-            msg_parts.append(f"Skipped {len(skipped)} not yet complete: {', '.join(skipped)}")
-        if errors:
-            msg_parts.append(f"Errors: {'; '.join(errors)}")
+            msg += f' Skipped {len(skipped)} not yet complete: {", ".join(skipped)}'
+        return JsonResponse({'success': True, 'message': msg})
 
-        return JsonResponse({'success': not errors, 'message': ' | '.join(msg_parts) or 'Nothing to export.'})
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)})
+
+
+def transfer_status(request):
+    state = _read_export_state()
+    if state is None:
+        return JsonResponse({'active': False})
+    return JsonResponse({
+        'active': True,
+        'started_at': state.get('started_at'),
+        'files': state.get('files', []),
+    })
 
 
 def add_torrent(request):

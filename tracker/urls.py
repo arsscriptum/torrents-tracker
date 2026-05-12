@@ -17,8 +17,10 @@ urlpatterns = [
     path("categories/games", views.games, name="games"),
     path("categories/games/<int:game_id>", views.games_single, name="games_single"),
     path("transfers", views.transfers, name="transfers"),
+    path("torrent_list", views.torrent_list, name="torrent_list"),
     path("cancel_torrents", views.cancel_torrents, name="cancel_torrents"),
     path("export_torrents", views.export_torrents, name="export_torrents"),
+    path("transfer_status", views.transfer_status, name="transfer_status"),
     path("manage_vpn", views.manage_vpn, name="manage_vpn"),
     path("add_torrent", views.add_torrent, name="add_torrent"),
 ]
