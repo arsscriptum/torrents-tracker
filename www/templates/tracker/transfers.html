@@ -101,7 +101,7 @@
                                    data-id="${t.id}" data-done="${t.done}"
                                    ${t.exporting ? 'disabled' : ''}></td>
                         <td title="${esc(t.error)}" ${t.exporting ? 'style="color:#ffd700;"' : ''}>${esc(t.name)}</td>
-                        <td ${t.exporting ? 'style="color:#ffd700;"' : ''}>${t.exporting ? 'Transferring' : esc(t.status)}</td>
+                        <td ${t.exporting ? 'style="color:#ffd700;"' : ''}>${t.exporting ? 'Exporting...' : esc(t.status)}</td>
                         <td>
                             <div class="progress" style="min-width:80px;height:18px;">
                                 <div class="progress-bar ${t.done ? 'bg-success' : 'bg-warning'}"
