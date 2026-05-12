@@ -10,7 +10,8 @@ services:
       - '/home/services/torrents-tracker:/app'
       - '/var/run/docker.sock:/var/run/docker.sock'
       - '/home/services/vpn/config:/vpnconfig'
-      - '/mnt/datassd:/mnt/datassd'
+      - '/mnt/datassd/Transfers/Completed:/Completed'
+      - '/mnt/datassd/Nouveautes:/mnt/datassd/Nouveautes'
     environment:
       - PUID=1000
       - PGID=1000

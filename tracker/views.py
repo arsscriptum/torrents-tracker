@@ -23,7 +23,7 @@ from django.contrib import messages
 # Async export state
 # ---------------------------------------------------------------------------
 EXPORT_STATE_FILE = '/logs/export_state.json'
-COMPLETED_DIR = '/mnt/datassd/Transfers/Completed'
+COMPLETED_DIR = '/Completed'
 EXPORT_DIR = '/mnt/datassd/Nouveautes'
 
 _export_thread: threading.Thread = None
