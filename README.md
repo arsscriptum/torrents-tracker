@@ -1,34 +1,10 @@
 <center><img src="https://github.com/arsscriptum/torrents-tracker-data/blob/master/img/title.png" alt="banner3"></center>
 
-<center><img src="https://github.com/arsscriptum/torrents-tracker-data/blob/master/img/importantnotice.png" alt="banner1"></center>
+**TORRENTS TRACKER**
 
-<center><img src="https://github.com/arsscriptum/torrents-tracker-data/blob/master/img/importantnotice2.png" alt="banner1"></center>
+Torrents-Tracker is my very own tool to search for torrents by leveraging the PirateBay search engine. 
 
-
-If you are like me, you enjoy the latest movies, tv shows. You especially enjoy clean, secure, simple tools that **just work** . 
-
-Listen, when you need a copy of copyrighted content, and you have no pipeline in place to get what you want, there's zero shame in opening a private window, use a free vpn search on piratebay website, etc and manipulate data into your download client.
-
-Personally, when I have a task that I repeat regularly, that makes me feel really mad inside, I create the tools to make this fun and easy to use instead.
-
-
-So here it is: Torrents-Tracker is my very own tool to search for torrents by leveraging multiple search engines:
-
-- PirateBay
-- 1337x
-- Kickass
-- MagnetDL
-
-It uses the unofficial APIs and 
-
-A design goal is to keep the whole proces of searching for data as simple and non-technical as possible, for example, make the torrents engine selection automatic, merge search results in one list and have the media selection -> download files operations completely seamless with as little user interaction as possible.
-Basically, so asy and simple to use that if, as an example, suppose there's a mixup in the dosage prescribed to you by your healthcare professionals, and after you took the micro-dot designed to help manage stress, you have deep, emotional conversations with your cactii and minutes feels like hours. You have allucinations (visual distortions, altered perception, etc.) and other standard psychoactive effects. 
-Well this tools is supposed to be as easy to use as if you were completely sober.
-
-Also, this tool is suppsed to be **fun** and **pleasant** to use, for me that means, pleasing to the eyes, no bugs when operaing and bringing a bit of positivity as you use and remember you did this and can actually do things that work a little.
-
-**LASTLY** *we want to download torrents without getting annoyed by our ISP [with those letters](https://arsscriptum.github.io/files/ispnotify.pdf)*
-
+I enjoy the latest movies, tv shows and wanted a tool to make my life easier. It's clean, secure, simple and **just works** . This tool is supposed to be **fun** and **pleasant** to use.
 
 ## Features
 
@@ -36,13 +12,12 @@ Also, this tool is suppsed to be **fun** and **pleasant** to use, for me that me
 2. **Integrated VPN**: using [docker-transmission-openvpn](https://arsscriptum.github.io/docker-transmission-openvpn/) so all the requests done to the torrents indexers is encrypted and routed through the VPN tunnel, preventing the user's actual IP address from being exposed
 3. **QTorrentVPN Integration**: So that when I find torrents to download, they are added automatically to the download queue in QBittorrent using the rest api, no more copy/pasting links left and right
 4. **Concurrent Scraping**: Utilizes Python modules like `asyncio` to perform multiple web scraping requests simultaneously, significantly reducing the total time spent in scraping.
-5. **Cloudflare Bypass**: Employs the `cloudscrape` module to effectively bypass Cloudflare security measures, ensuring reliable access to torrent sites.
-6. **Integration of TMDB API**: using TMDB to retreive media extended information in real-time to give recent information regarding the search files.
-7. **Discovery Feature for the undecided**: There's a section in the tool where you find all the titles that are on the bleeding edge of media availabilities, as well as providing movie / tc show ideas if you are undecided on what to watch
-8. **VPN Exit node location visualizer**: This integrated feature uses a map to locate the geographical location related to the IP that was assigned to you by the VPN service. Easy to confirm you are using a VPN and that you are in fact not on your ISP's servers.
+5. **Integration of TMDB API**: using TMDB to retreive media extended information in real-time to give recent information regarding the search files.
+6. **Discovery Feature for the undecided**: There's a section in the tool where you find all the titles that are on the bleeding edge of media availabilities, as well as providing movie / tc show ideas if you are undecided on what to watch
+7. **VPN Exit node location visualizer**: This integrated feature uses a map to locate the geographical location related to the IP that was assigned to you by the VPN service. Easy to confirm you are using a VPN and that you are in fact not on your ISP's servers.
 
 ## Looks and Feel
-1
+
 ### UI Overview
 
 

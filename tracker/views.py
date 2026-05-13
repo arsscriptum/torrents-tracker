@@ -100,31 +100,38 @@ def searchTorrents(request):
     return render(request, "tracker/searchResults.html", context)
 
 
+VPN_NODES_JSON = '/vpnconfig/vpn-nodes.json'
+# Host→container path mappings for volumes mounted in the transmissionvpn container
+_VPN_MOUNT_MAPPINGS = [
+    ('/home/services/vpn/config/', '/config/'),
+    ('/home/services/vpn/etc-protonvpn/', '/etc/openvpn/protonvpn/'),
+]
+
+
+def _load_vpn_nodes():
+    """Return sorted list of VPN node dicts from the JSON file, or [] on any error."""
+    try:
+        with open(VPN_NODES_JSON) as f:
+            nodes = json.load(f)
+        return sorted(nodes, key=lambda n: n.get('Index', 0))
+    except Exception:
+        return []
+
+
 def site_options(request):
-    vpn_configs = []
-    current_vpn = ''
     container_running = False
     try:
         import docker as docker_sdk
         client = docker_sdk.from_env()
         container = client.containers.get('transmissionvpn')
-        env_vars = {
-            e.split('=')[0]: e.split('=', 1)[1]
-            for e in container.attrs['Config']['Env'] if '=' in e
-        }
-        current_vpn = env_vars.get('OPENVPN_CONFIG', '')
-        provider = env_vars.get('OPENVPN_PROVIDER', 'PROTONVPN').lower()
         container_running = container.status == 'running'
-        if container_running:
-            exit_code, output = container.exec_run(f'ls /etc/openvpn/{provider}/')
-            if exit_code == 0:
-                files = output.decode().strip().split('\n')
-                vpn_configs = sorted(f.replace('.ovpn', '') for f in files if f.endswith('.ovpn'))
     except Exception:
         pass
+
+    vpn_nodes = _load_vpn_nodes()
+
     return render(request, "tracker/site_options.html", {
-        'vpn_configs': vpn_configs,
-        'current_vpn': current_vpn,
+        'vpn_nodes': vpn_nodes,
         'container_running': container_running,
     })
 
@@ -723,38 +730,47 @@ def manage_vpn(request):
 
     try:
         data = json.loads(request.body)
-        vpn_id = data.get('vpn_id', '').strip()
+        raw_index = data.get('vpn_index')
+        if raw_index is None:
+            return JsonResponse({'success': False, 'message': 'vpn_index not provided.'})
 
-        if not vpn_id:
-            return JsonResponse({'success': False, 'message': 'VPN ID not provided.'})
+        vpn_index = int(raw_index)
+        nodes = _load_vpn_nodes()
+        node = next((n for n in nodes if n.get('Index') == vpn_index), None)
+        if not node:
+            return JsonResponse({'success': False, 'message': f'No VPN node with index {vpn_index}.'})
+
+        host_path = node.get('FilePath', '')
+        container_src = None
+        for host_prefix, container_prefix in _VPN_MOUNT_MAPPINGS:
+            if host_path.startswith(host_prefix):
+                container_src = container_prefix + host_path[len(host_prefix):]
+                break
+        if container_src is None:
+            allowed = ', '.join(p for p, _ in _VPN_MOUNT_MAPPINGS)
+            return JsonResponse({'success': False, 'message': f'FilePath must be under one of: {allowed}'})
 
         import docker as docker_sdk
         client = docker_sdk.from_env()
         container = client.containers.get('transmissionvpn')
 
-        # Determine provider and current active config from container env
         env_vars = {
             e.split('=')[0]: e.split('=', 1)[1]
             for e in container.attrs['Config']['Env'] if '=' in e
         }
         provider = env_vars.get('OPENVPN_PROVIDER', 'PROTONVPN').lower()
         current_config = env_vars.get('OPENVPN_CONFIG', '')
+        active_ovpn = f'/etc/openvpn/{provider}/{current_config}.ovpn'
 
-        config_dir = f'/etc/openvpn/{provider}'
-        new_ovpn = f'{config_dir}/{vpn_id}.ovpn'
-        active_ovpn = f'{config_dir}/{current_config}.ovpn'
-
-        # Copy new config over the active one (skip if same file), then SIGHUP openvpn.
-        # pkill -HUP openvpn returns 1 when no process matched — use || true so the
+        # Copy new config over the active one, then SIGHUP openvpn.
+        # pkill -HUP returns 1 when no process matched — use || true so the
         # overall exit code reflects only whether the cp succeeded.
-        if new_ovpn != active_ovpn:
-            shell_cmd = f'cp {new_ovpn} {active_ovpn} && (pkill -HUP -x openvpn || true)'
-        else:
-            shell_cmd = 'pkill -HUP -x openvpn || true'
+        shell_cmd = f'cp {container_src} {active_ovpn} && (pkill -HUP -x openvpn || true)'
         exit_code, output = container.exec_run(['bash', '-c', shell_cmd])
 
         if exit_code == 0:
-            return JsonResponse({'success': True, 'message': f'Switching VPN to {vpn_id}. Reconnecting...'})
+            label = f'{node.get("City", "")}, {node.get("Country", "")}'.strip(', ')
+            return JsonResponse({'success': True, 'message': f'Switching VPN to {label}. Reconnecting...'})
         else:
             return JsonResponse({'success': False, 'message': output.decode(errors='replace')})
 
