@@ -21,7 +21,7 @@ jobs:
 
       # QEMU emulator to build for other platforms
       - name: QEMU Emulator Initialization for Multi-Platforms Compilation
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       # Buildx automates creating the multi-arch manifest build
       - name: BuildX Initialization (multi-arch manifest)
