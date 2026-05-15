@@ -37,7 +37,7 @@ jobs:
       # Generate image tags and labels
       - name: Generating Metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: |
             ${{ matrix.image-name }}
