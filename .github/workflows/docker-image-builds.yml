@@ -17,7 +17,7 @@ jobs:
             context: ./
     steps:
       - name: Fetching Latest Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # QEMU emulator to build for other platforms
       - name: QEMU Emulator Initialization for Multi-Platforms Compilation
