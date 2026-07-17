@@ -10,7 +10,7 @@ services:
       - '/home/services/torrents-tracker:/app'
       - '/var/run/docker.sock:/var/run/docker.sock'
       - '/home/services/vpn/config:/vpnconfig'
-      - '/mnt/datassd/Transfers/Completed:/Completed'
+      - '/mnt/databackup/Transfers/Complete:/Completed'
       - '/mnt/datassd/Nouveautes:/mnt/datassd/Nouveautes'
     environment:
       - PUID=1000
@@ -29,8 +29,8 @@ services:
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
     volumes:
-      - '/mnt/datassd/Transfers/Incomplete:/Incomplete'
-      - '/mnt/datassd/Transfers/Completed:/Completed'
+      - '/mnt/databackup/Transfers/Incomplete:/Incomplete'
+      - '/mnt/databackup/Transfers/Complete:/Completed'
       - '/home/services/vpn/scripts:/scripts'
       - '/home/services/vpn/data:/data'
       - '/home/services/vpn/config:/config'  # make sure all the .ovpn files are in this folder!
