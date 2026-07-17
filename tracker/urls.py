@@ -22,5 +22,7 @@ urlpatterns = [
     path("export_torrents", views.export_torrents, name="export_torrents"),
     path("transfer_status", views.transfer_status, name="transfer_status"),
     path("manage_vpn", views.manage_vpn, name="manage_vpn"),
+    path("vpn_config_load", views.vpn_config_load, name="vpn_config_load"),
+    path("vpn_config_save", views.vpn_config_save, name="vpn_config_save"),
     path("add_torrent", views.add_torrent, name="add_torrent"),
 ]

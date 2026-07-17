@@ -724,6 +724,53 @@ def add_torrent(request):
         return JsonResponse({'success': False, 'message': str(e)})
 
 
+def _resolve_vpn_file_path(host_path):
+    """Translate a vpn-nodes.json host FilePath to where it's accessible in this process."""
+    if os.path.exists(host_path):
+        return host_path
+    # In Docker the host path /home/services/vpn/config/ is mounted at /vpnconfig/
+    if host_path.startswith('/home/services/vpn/config/'):
+        return '/vpnconfig/' + host_path[len('/home/services/vpn/config/'):]
+    return host_path
+
+
+def vpn_config_load(request):
+    """AJAX GET: return raw text of a VPN config file by node index."""
+    try:
+        index = int(request.GET.get('index', -1))
+        nodes = _load_vpn_nodes()
+        node = next((n for n in nodes if n.get('Index') == index), None)
+        if not node:
+            return JsonResponse({'success': False, 'message': f'No VPN node with index {index}.'})
+        path = _resolve_vpn_file_path(node.get('FilePath', ''))
+        with open(path) as f:
+            content = f.read()
+        return JsonResponse({'success': True, 'content': content})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+
+
+def vpn_config_save(request):
+    """AJAX POST: overwrite a VPN config file with new content."""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'POST required.'})
+    try:
+        data = json.loads(request.body)
+        index = int(data.get('index', -1))
+        content = data.get('content', '')
+        nodes = _load_vpn_nodes()
+        node = next((n for n in nodes if n.get('Index') == index), None)
+        if not node:
+            return JsonResponse({'success': False, 'message': f'No VPN node with index {index}.'})
+        path = _resolve_vpn_file_path(node.get('FilePath', ''))
+        with open(path, 'w') as f:
+            f.write(content)
+        label = f'{node.get("City", "")}, {node.get("Country", "")}'.strip(', ')
+        return JsonResponse({'success': True, 'message': f'Saved: {label}'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)})
+
+
 def manage_vpn(request):
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Invalid request method.'})
