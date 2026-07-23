@@ -11,6 +11,7 @@ services:
       - '/var/run/docker.sock:/var/run/docker.sock'
       - '/home/services/vpn/config:/vpnconfig'
       - '/mnt/databackup/Transfers/Completed:/Completed'
+      - '/mnt/databackup/Transfers/Incomplete:/Incomplete:ro'
       - '/mnt/datassd/Nouveautes:/mnt/datassd/Nouveautes'
     environment:
       - PUID=1000
@@ -44,6 +45,7 @@ services:
     environment:
       - OPENVPN_PROVIDER=PROTONVPN
       - OPENVPN_CONFIG=ca-169.protonvpn.udp
+      - HEALTH_CHECK_HOST=videotron.ca
       - VPN_CONFIG_SOURCE=internal  # use the bind-mounted /etc/openvpn/protonvpn instead of github fetch
       # Don't remap SIGUSR1 to SIGTERM. The default 'remap-usr1 SIGTERM' that
       # modify-openvpn-config.sh injects makes OpenVPN HARD-EXIT on a single
@@ -51,6 +53,7 @@ services:
       # docker restart. Leaving SIGUSR1 alone lets OpenVPN soft-restart and
       # cycle through the remote list itself — same approach qbittorrentvpn uses.
       - CONFIG_MOD_REMAP_USR1=0
+      - OPENVPN_OPTS=--mssfix 1400 --replay-window 256 60 --mute-replay-warnings
       - OPENVPN_USERNAME=${OPENVPN_USERNAME}
       - OPENVPN_PASSWORD=${OPENVPN_PASSWORD}
       - VPN_ENABLED=yes
@@ -73,6 +76,7 @@ services:
       - TZ=America/New_York
       - PUID=1000
       - PGID=1000
+      - SELFHEAL=true
     ports:
       - "7070:7070"  # Expose port 7070 on the VPN container
       - "9091:9091"
