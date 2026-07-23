@@ -133,7 +133,7 @@ rsync -av --delete \
     --exclude='logs/' \
     --exclude='db/' \
     --exclude='db.sqlite3' \
-    --exclude='static/' \
+    --exclude='/static/' \
     --exclude='*.tmp' \
     --exclude='*.tmp.png' \
     --exclude='state.json' \

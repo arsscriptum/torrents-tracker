@@ -1,0 +1,27 @@
+{% if disk_stats.available %}
+<div class="disk-stats">
+    <div class="disk-stats__meter" title="{{ disk_stats.used }} used &middot; {{ disk_stats.free }} free">
+        <div class="disk-stats__meter-track">
+            <div class="disk-stats__meter-fill" style="width:{{ disk_stats.percent_used }}%;"></div>
+        </div>
+        <span class="disk-stats__meter-label">
+            <strong>{{ disk_stats.used }}</strong> used &middot; <strong>{{ disk_stats.free }}</strong> free
+            <span class="disk-stats__percent">({{ disk_stats.percent_free }}% free)</span>
+        </span>
+    </div>
+    <div class="disk-stats__chips">
+        <span class="disk-stats__chip disk-stats__chip--incomplete">
+            <i class="fas fa-arrow-down"></i>
+            {{ disk_stats.incomplete_count }} incomplete
+            <span class="disk-stats__chip-sep">&middot;</span>
+            {{ disk_stats.incomplete_size }}
+        </span>
+        <span class="disk-stats__chip disk-stats__chip--completed">
+            <i class="fas fa-box"></i>
+            {{ disk_stats.completed_count }} completed
+            <span class="disk-stats__chip-sep">&middot;</span>
+            not exported
+        </span>
+    </div>
+</div>
+{% endif %}

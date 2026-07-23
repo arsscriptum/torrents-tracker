@@ -24,6 +24,7 @@ from django.contrib import messages
 # ---------------------------------------------------------------------------
 EXPORT_STATE_FILE = '/logs/export_state.json'
 COMPLETED_DIR = '/Completed'
+INCOMPLETE_DIR = '/Incomplete'
 EXPORT_DIR = '/mnt/datassd/Nouveautes'
 
 _export_thread: threading.Thread = None
@@ -80,8 +81,68 @@ def _do_export(state):
         except OSError:
             pass
 
+def _human_bytes(n):
+    """Format a byte count the way `df -h` / `du -sh` do (1024-based, short suffix)."""
+    units = ['B', 'K', 'M', 'G', 'T', 'P']
+    size = float(n)
+    idx = 0
+    while size >= 1024 and idx < len(units) - 1:
+        size /= 1024
+        idx += 1
+    if idx == 0:
+        return f'{int(size)}{units[idx]}'
+    return f'{size:.1f}{units[idx]}' if size < 10 else f'{round(size)}{units[idx]}'
+
+
+def _dir_stats(path):
+    """Return (top-level item count, total size in bytes) for a directory, like `du -sh`."""
+    count = 0
+    total_size = 0
+    try:
+        with os.scandir(path) as entries:
+            for entry in entries:
+                count += 1
+                try:
+                    if entry.is_dir(follow_symlinks=False):
+                        for root, _dirs, files in os.walk(entry.path):
+                            for name in files:
+                                try:
+                                    total_size += os.path.getsize(os.path.join(root, name))
+                                except OSError:
+                                    pass
+                    else:
+                        total_size += entry.stat().st_size
+                except OSError:
+                    pass
+    except OSError:
+        pass
+    return count, total_size
+
+
+def _get_disk_stats():
+    """Disk usage + transfer directory stats for the databackup mount, shown on the home and transfers pages."""
+    try:
+        usage = shutil.disk_usage(COMPLETED_DIR)
+    except OSError:
+        return {'available': False}
+
+    incomplete_count, incomplete_size = _dir_stats(INCOMPLETE_DIR)
+    completed_count, _completed_size = _dir_stats(COMPLETED_DIR)
+
+    return {
+        'available':        True,
+        'used':             _human_bytes(usage.used),
+        'free':             _human_bytes(usage.free),
+        'percent_used':     round(usage.used / usage.total * 100, 1) if usage.total else 0,
+        'percent_free':     round(usage.free / usage.total * 100, 1) if usage.total else 0,
+        'incomplete_count': incomplete_count,
+        'incomplete_size':  _human_bytes(incomplete_size),
+        'completed_count':  completed_count,
+    }
+
+
 def index(request):
-    return render(request, "tracker/index.html")
+    return render(request, "tracker/index.html", {'disk_stats': _get_disk_stats()})
 
 # Helper Function for Validating Input Length
 def validate_input_length(value, min_length, max_length):
@@ -559,6 +620,7 @@ def transfers(request):
         'no_footer':     True,
         'export_active': bool(state),
         'export_state':  state,
+        'disk_stats':    _get_disk_stats(),
     })
 
 
