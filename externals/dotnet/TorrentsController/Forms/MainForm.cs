@@ -551,16 +551,9 @@ public sealed class MainForm : Form
     private void OnSettings(object? s, EventArgs e)
     {
         var path = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
-        try
-        {
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path)
-                { UseShellExecute = true });
-        }
-        catch
-        {
-            MessageBox.Show($"Edit appsettings.json at:\n{path}", "Settings",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
+        using var dlg = new SettingsForm(path);
+        if (dlg.ShowDialog(this) == DialogResult.OK)
+            AppendEvent("Settings saved — restart the app to apply changes.");
     }
 
     private void OnAbout(object? s, EventArgs e) =>
