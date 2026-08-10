@@ -35,4 +35,9 @@ static/**
 
 .env
 SCREEN_CAPTURES
-SCREEN_CAPTURES/**
+SCREEN_CAPTURES/**CLAUDE_SHARED
+CLAUDE_SHARED/**
+externals/dotnet/TorrentsController/bin/**
+externals/dotnet/TorrentsController/obj/**
+externals/dotnet/TorrentsController/obj
+externals/dotnet/TorrentsController/bin
