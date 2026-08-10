@@ -8,13 +8,13 @@ static class Program
     static void Main()
     {
         ApplicationConfiguration.Initialize();
-        Application.Run(new AppContext());
+        Application.Run(new TrayContext());
     }
 }
 
-sealed class AppContext : ApplicationContext
+sealed class TrayContext : ApplicationContext
 {
-    public AppContext()
+    public TrayContext()
     {
         var splash = new SplashForm();
         splash.Closed += OnSplashClosed;
