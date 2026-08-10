@@ -168,12 +168,7 @@ public sealed class MainForm : Form
     private TabPage BuildEventsTab()
     {
         var page  = new TabPage("Events");
-        var split = new SplitContainer
-        {
-            Dock          = DockStyle.Fill,
-            Panel1MinSize = 280,
-            Panel2MinSize = 160,
-        };
+        var split = new SplitContainer { Dock = DockStyle.Fill };
         _splitEvents = split;
 
         _rtbEvents = new RichTextBox
@@ -330,7 +325,9 @@ public sealed class MainForm : Form
     protected override async void OnLoad(EventArgs e)
     {
         base.OnLoad(e);
-        _splitEvents.SplitterDistance = Math.Min(570, _splitEvents.Width - _splitEvents.Panel2MinSize - 4);
+        _splitEvents.Panel1MinSize    = 280;
+        _splitEvents.Panel2MinSize    = 160;
+        _splitEvents.SplitterDistance = Math.Min(570, _splitEvents.Width - 160 - 4);
         AppendEvent("Control Center started.");
         AppendEvent($"Server: {_cfg.ServerHost}  |  Tracker: {_cfg.TrackerPort}  |  Transmission: {_cfg.TransmissionPort}");
         _pollTimer.Start();
