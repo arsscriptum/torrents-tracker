@@ -28,6 +28,7 @@ public sealed class MainForm : Form
     private ListView     _lvFiles     = null!;
     private DataGridView _dgvTorrents = null!;
     private TabControl   _tabs        = null!;
+    private SplitContainer _splitEvents = null!;
 
     // ── Tray ────────────────────────────────────────────────────────────────
     private NotifyIcon       _tray     = null!;
@@ -169,11 +170,11 @@ public sealed class MainForm : Form
         var page  = new TabPage("Events");
         var split = new SplitContainer
         {
-            Dock             = DockStyle.Fill,
-            SplitterDistance = 570,
-            Panel1MinSize    = 280,
-            Panel2MinSize    = 160,
+            Dock          = DockStyle.Fill,
+            Panel1MinSize = 280,
+            Panel2MinSize = 160,
         };
+        _splitEvents = split;
 
         _rtbEvents = new RichTextBox
         {
@@ -329,6 +330,7 @@ public sealed class MainForm : Form
     protected override async void OnLoad(EventArgs e)
     {
         base.OnLoad(e);
+        _splitEvents.SplitterDistance = Math.Min(570, _splitEvents.Width - _splitEvents.Panel2MinSize - 4);
         AppendEvent("Control Center started.");
         AppendEvent($"Server: {_cfg.ServerHost}  |  Tracker: {_cfg.TrackerPort}  |  Transmission: {_cfg.TransmissionPort}");
         _pollTimer.Start();
