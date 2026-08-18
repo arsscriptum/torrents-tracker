@@ -52,7 +52,7 @@ VPN_CONTAINER="transmissionvpn"
 
 # Tunables
 MAX_DISK_PCT="${MAX_DISK_PCT:-92}"           # abort if /mnt/datassd usage above this
-DATA_MOUNT="${DATA_MOUNT:-/mnt/datassd}"
+DATA_MOUNT="${DATA_MOUNT:-/mnt/plexdata}"
 APP_URL="${APP_URL:-http://127.0.0.1:7070/tracker/}"
 EXPECTED_COUNTRY="${EXPECTED_COUNTRY:-CA}"
 WAIT_VPN_TIMEOUT="${WAIT_VPN_TIMEOUT:-180}"  # seconds to wait for VPN tunnel to be up
