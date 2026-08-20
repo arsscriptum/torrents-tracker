@@ -9,8 +9,8 @@ services:
       - '/home/services/torrents-tracker:/app'
       - '/var/run/docker.sock:/var/run/docker.sock'
       - '/home/services/vpn/config:/vpnconfig'
-      - '/mnt/plexdata/Transfers/Completed:/Completed'
-      - '/mnt/plexdata/Transfers/Incomplete:/Incomplete:ro'
+      - '/mnt/external_128Gb/Transfers/Completed:/Completed'
+      - '/mnt/external_128Gb/Transfers/Incomplete:/Incomplete:ro'
       - '/mnt/datassd/Nouveautes:/mnt/datassd/Nouveautes'
     environment:
       - PUID=1000
@@ -29,8 +29,8 @@ services:
     sysctls:
       - net.ipv6.conf.all.disable_ipv6=0
     volumes:
-      - '/mnt/plexdata/Transfers/Incomplete:/Incomplete'
-      - '/mnt/plexdata/Transfers/Completed:/Completed'
+      - '/mnt/external_128Gb/Transfers/Incomplete:/Incomplete'
+      - '/mnt/external_128Gb/Transfers/Completed:/Completed'
       - '/home/services/vpn/scripts:/scripts'
       - '/home/services/vpn/data:/data'
       - '/home/services/vpn/config:/config'
