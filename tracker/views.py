@@ -265,7 +265,7 @@ def about(request):
         
         # Generate map using IP's latitude and longitude
         latitude, longitude = map(float, ip_info["loc"].split(","))
-        folium_map = folium.Map(location=[latitude, longitude], zoom_start=4)
+        folium_map = folium.Map(location=[latitude, longitude], zoom_start=4, tiles='CartoDB dark_matter')
         folium.Marker([latitude, longitude], tooltip="Your IP Location").add_to(folium_map)
         
         # Render the map to HTML and pass it to the template

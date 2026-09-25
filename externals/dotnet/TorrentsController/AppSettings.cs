@@ -6,7 +6,7 @@ namespace TorrentsController;
 public class AppSettings
 {
     [JsonPropertyName("serverHost")]
-    public string ServerHost { get; set; } = "192.168.1.100";
+    public string ServerHost { get; set; } = "10.0.0.111";
 
     [JsonPropertyName("trackerPort")]
     public int TrackerPort { get; set; } = 7070;
@@ -18,16 +18,16 @@ public class AppSettings
     public string SshUser { get; set; } = "gp";
 
     [JsonPropertyName("sshPassword")]
-    public string SshPassword { get; set; } = "";
+    public string SshPassword { get; set; } = "Born33ToFrag";
 
     [JsonPropertyName("sshKeyFile")]
-    public string SshKeyFile { get; set; } = "";
+    public string SshKeyFile { get; set; } = "id_ed25519";
 
     [JsonPropertyName("servicePath")]
     public string ServicePath { get; set; } = "/home/services/torrents-tracker";
 
     [JsonPropertyName("portainerUrl")]
-    public string PortainerUrl { get; set; } = "";
+    public string PortainerUrl { get; set; } = "https://10.0.0.111:9443";
 
     [JsonIgnore]
     public string TrackerBaseUrl => $"http://{ServerHost}:{TrackerPort}/tracker";

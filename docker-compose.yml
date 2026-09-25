@@ -12,7 +12,6 @@ services:
       - '/home/services/vpn/config:/vpnconfig'
       - '/mnt/external_128Gb/Transfers/Completed:/Completed'
       - '/mnt/external_128Gb/Transfers/Incomplete:/Incomplete:ro'
-      - '/mnt/datassd/Nouveautes:/mnt/datassd/Nouveautes'
     environment:
       - PUID=1000
       - PGID=1000

@@ -33,6 +33,9 @@ static/**
 
 *.tmp.png
 
+id_ed25519
+externals/dotnet/id_ed25519
+id_ed25519.*
 .env
 SCREEN_CAPTURES
 SCREEN_CAPTURES/**CLAUDE_SHARED
