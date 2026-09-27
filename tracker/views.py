@@ -25,7 +25,8 @@ from django.contrib import messages
 EXPORT_STATE_FILE = '/logs/export_state.json'
 COMPLETED_DIR = '/Completed'
 INCOMPLETE_DIR = '/Incomplete'
-EXPORT_DIR = '/mnt/datassd/Nouveautes'
+EXPORT_DIR = '/ExportedMedias'
+# /mnt/external_128Gb/ExportedMedias
 
 _export_thread: threading.Thread = None
 _export_lock = threading.Lock()
